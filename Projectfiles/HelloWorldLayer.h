@@ -13,13 +13,45 @@
     int screenwidth;
     CGPoint screencenter;
     
+    bool isdead;
+    bool karthus;
+    float deadrotation;
+    
+    float diffcount;
+    
     float rotation;
     float lasttouchangle;
+    
+    NSMutableArray* circle2;
+    NSMutableArray* circle2dir;
+    NSMutableArray* circle2color;
     
     CCSprite* block;
     CCSprite* block2;
     
+    int score;
+    
+    CCSpriteBatchNode* SpriteSheet1;
+    
+    CCMotionStreak* blockstreak;
+    CCMotionStreak* blockstreak2;
+    
+    float blockside1;
+    float blockside2;
+    float blockside3;
+    float blockside4;
+    
+    int enemyspeed;
+    
+    int playerWidth;
+    
+    int colorseeking;
+    
     CCSprite* player;
+    
+    CCRenderTexture* rt;
+    
+
 }
 
 @end
