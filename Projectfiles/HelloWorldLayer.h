@@ -30,6 +30,7 @@
     CCSprite* block2;
     
     int score;
+    CCLabelTTF* scorelabel;
     
     CCSpriteBatchNode* SpriteSheet1;
     
@@ -53,5 +54,7 @@
     
 
 }
+
++(id) scene;
 
 @end

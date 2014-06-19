@@ -51,6 +51,7 @@
         player.position = screencenter;
         [self addChild:player z:3];
         player.scale = 0.15;
+        player.anchorPoint = ccp(0.5,0.5);
         
         //blockades
         block = [CCSprite spriteWithFile:@"block.png"];
@@ -80,6 +81,11 @@
         circle2dir = [[NSMutableArray alloc] init];
         circle2color = [[NSMutableArray alloc] init];
         
+        //label
+        scorelabel = [CCLabelTTF labelWithString:@"0" fontName:@"HelveticaNeue-UltraLight" fontSize:30];
+        scorelabel.color = ccc3(0, 0, 0);
+        scorelabel.position = ccp(player.position.x - screenwidth/2 + 15,player.position.y + screenheight/2 - 15);
+        [self addChild:scorelabel z:4];
         
         //color
         rt = [[CCRenderTexture alloc] initWithWidth:screenwidth height:screenheight pixelFormat:kCCTexture2DPixelFormat_RGBA8888];
@@ -89,38 +95,34 @@
         {
             CCSprite* enemy = [CCSprite spriteWithFile:@"orange.png"];
             
-            int randx;
-            int randy;
+            int randx = 200;
+            int randy = 200;
             
-            bool okx = false;
-            bool oky= false;
+            bool tryagainx = [self getYesOrNo];
+            bool tryagainy = [self getYesOrNo];
             
-            while(!okx)
+            
+            
+            
+            
+            randx = (arc4random() % 300);
+            if(tryagainx)
             {
-                randx = (arc4random() % 1200)-600;
-                
-                if(randx > -300 && randx < 300)
-                {
-                    okx = false;
-                }
-                else
-                {
-                    okx = true;
-                }
+                randx = 250 + randx;
             }
-            while(!oky)
+            else
             {
-                randy = (arc4random() % 1200)-600;
-                
-                if(randy > -300 && randy < 300)
-                {
-                    oky = false;
-                }
-                else
-                {
-                    oky = false;
-                }
-                
+                randx = -50 - randx;
+            }
+            
+            randy = (arc4random() % 300);
+            if(tryagainy)
+            {
+                randy = 150 + randy;
+            }
+            else
+            {
+                randy = -150 - randy;
             }
             
             enemy.position = ccp(randx,randy);
@@ -215,10 +217,19 @@
     [self circleCollisionWith];
     [self calculateblocks];
     [self karthuspassive];
+    [self scoreplacement];
     
 }
 
+-(void) scoreplacement
+{
+    //scorelabel.position = ccp(player.position.x - screenwidth/2 + 15,player.position.y + screenheight/2 - 15);
+}
 
+-(BOOL) getYesOrNo
+{
+    return (CCRANDOM_0_1() < 0.5f);
+}
 
 -(void) dead
 {
@@ -302,6 +313,8 @@
             [[CCDirector sharedDirector] replaceScene:[HelloWorldLayer scene]];
 
         }
+        
+        //NSLog(@"%f,%f",diffcount,op);
         
         player.opacity = op;
         block.opacity = op;
@@ -517,6 +530,8 @@
         
         player.position = ccpAdd(player.position, direction);
         
+        scorelabel.position = ccpAdd(scorelabel.position, direction);
+        
         player.rotation = angle + 90;
     }
     
@@ -525,17 +540,33 @@
 
 -(void) bounceAnim:(CCSprite*) sprite
 {
-    int orginialscale = sprite.scaleY;
-    id scalein = [CCScaleTo actionWithDuration:0.5f scaleX:0.01f scaleY:orginialscale];
-    id delayTimeAction = [CCDelayTime actionWithDuration:0.5];
+    float orginialscale = sprite.scaleY;
+    id scalein = [CCScaleTo actionWithDuration:0.5f scaleX:orginialscale/5 scaleY:orginialscale];
+    id delayTimeAction = [CCDelayTime actionWithDuration:0.2];
     
     int rands = arc4random() % 10;
     
     float sc = 0.05 + (rands * 0.02);
     
-    id scaleout = [CCScaleTo actionWithDuration:0.5f scale:sc];
+    id scaleout = [CCScaleTo actionWithDuration:0.2f scale:sc];
     
-    id action = [CCSequence actions:scalein,delayTimeAction,scaleout, nil];
+    id action = [CCSequence actions:scalein,scaleout, nil];
+    [sprite runAction:action];
+}
+
+-(void) bounceAnimY:(CCSprite*) sprite
+{
+    float orginialscale = sprite.scaleY;
+    id scalein = [CCScaleTo actionWithDuration:0.5f scaleX:orginialscale scaleY:orginialscale/5];
+    id delayTimeAction = [CCDelayTime actionWithDuration:0.2];
+    
+    int rands = arc4random() % 10;
+    
+    float sc = 0.05 + (rands * 0.02);
+    
+    id scaleout = [CCScaleTo actionWithDuration:0.2f scale:sc];
+    
+    id action = [CCSequence actions:scalein,scaleout, nil];
     [sprite runAction:action];
 }
 
@@ -572,20 +603,15 @@
                 hitdir = 180 + (180-hitdir);
             }
             [circle2dir replaceObjectAtIndex:i withObject:[NSNumber numberWithFloat:hitdir]];
+            [self bounceAnimY:temp];
         }
         
         if(temp.position.y < -700)
         {
-            //            if(hitdir < 90 && hitdir > 0)
-            //            {
-            //                hitdir = 360 - hitdir;
-            //            }
-            //            else if(hitdir > 270 && hitdir < 360)
-            //            {
-            //                hitdir = 0 + (360-hitdir);
             //            }
             hitdir = 360 - hitdir;
             [circle2dir replaceObjectAtIndex:i withObject:[NSNumber numberWithFloat:hitdir]];
+            [self bounceAnimY:temp];
         }
         
         if(temp.position.x > 700)
@@ -613,6 +639,7 @@
                 hitdir = 90 + (90 - hitdir);
             }
             [circle2dir replaceObjectAtIndex:i withObject:[NSNumber numberWithFloat:hitdir]];
+            [self bounceAnim:temp];
         }
     }
     
@@ -748,6 +775,7 @@
                 if([[circle2color objectAtIndex:i] intValue] == colorseeking)
                 {
                     score++;
+                    [scorelabel setString:[NSString stringWithFormat:@"%d",score]];
                     
                     //id tint = [CCTintTo actionWithDuration:1.0 red:255 green:255 blue:255];
                     id fade = [CCFadeTo actionWithDuration:1.0];
