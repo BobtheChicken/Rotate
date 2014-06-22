@@ -9,6 +9,8 @@
 
 @interface HelloWorldLayer : CCLayer
 {
+    CCLayer* layer;
+    
     int screenheight;
     int screenwidth;
     CGPoint screencenter;

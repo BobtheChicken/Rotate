@@ -22,18 +22,26 @@
         
         diffcount = 100;
         
+        layer = [CCLayer node];
+        [self addChild:layer];
+        
         //score
         score = 0;
         
         //batchnode
         SpriteSheet1 = [CCSpriteBatchNode batchNodeWithFile:@"orange.png"];
-        [self addChild:SpriteSheet1];
+        [layer addChild:SpriteSheet1];
         
         //bg
         CCSprite* bg = [CCSprite spriteWithFile:@"bgc.png"];
         bg.position = screencenter;
-        [self addChild:bg z:-1];
+        [layer addChild:bg z:-1];
         bg.scale = 1;
+        
+        CCSprite* wall = [CCSprite spriteWithFile:@"walls.png"];
+        wall.position = screencenter;
+        [layer addChild:wall z:5];
+        wall.scale = 2;
         
 		//SCREEN VALUES
         screencenter = [CCDirector sharedDirector].screenCenter;
@@ -44,26 +52,31 @@
 		CCLabelTTF* label = [CCLabelTTF labelWithString:@"Rotate" fontName:@"Arial" fontSize:20];
 		label.position = ccp(screenwidth/2,screenheight - 40);
 		label.color = ccWHITE;
-		//[self addChild:label];
+		//[layer addChild:label];
         
         //player sprite
         player = [CCSprite spriteWithFile:@"orange.png"];
-        player.position = screencenter;
-        [self addChild:player z:3];
+        player.position = ccp(screencenter.x - 50,screencenter.y);
+        [layer addChild:player z:6];
         player.scale = 0.15;
         player.anchorPoint = ccp(0.5,0.5);
+        player.rotation = [[NSUserDefaults standardUserDefaults] floatForKey:@"rotation"];
         
         //blockades
         block = [CCSprite spriteWithFile:@"block.png"];
         block.position = screencenter;
-        [self addChild:block z:3];
+        [layer addChild:block z:6];
         block.scale = 0.15;
+        block.rotation = [[NSUserDefaults standardUserDefaults] floatForKey:@"rotation"];
         
         block2 = [CCSprite spriteWithFile:@"block.png"];
         block2.position = screencenter;
-        [self addChild:block2 z:3];
+        [layer addChild:block2 z:6];
         block2.scale = 0.15;
-        block2.rotation = 180;
+        block2.rotation = [[NSUserDefaults standardUserDefaults] floatForKey:@"rotation"] + 180;
+        
+        
+        
         
         //motion streak
         [self blur];
@@ -84,8 +97,8 @@
         //label
         scorelabel = [CCLabelTTF labelWithString:@"0" fontName:@"HelveticaNeue-UltraLight" fontSize:30];
         scorelabel.color = ccc3(0, 0, 0);
-        scorelabel.position = ccp(player.position.x - screenwidth/2 + 15,player.position.y + screenheight/2 - 15);
-        [self addChild:scorelabel z:4];
+        scorelabel.position = ccp(15,screenheight - 15);
+        [self addChild:scorelabel z:1];
         
         //color
         rt = [[CCRenderTexture alloc] initWithWidth:screenwidth height:screenheight pixelFormat:kCCTexture2DPixelFormat_RGBA8888];
@@ -190,12 +203,12 @@
                     break;
             }
             
-            id tint = [CCTintTo actionWithDuration:0.1f red:r green:g blue:b];
+            id tint = [CCTintTo actionWithDuration:0.0f red:r green:g blue:b];
             [enemy runAction:tint];
             
         }
         
-        [self changeColor];
+        [self changeColorStart];
         
         
         
@@ -223,7 +236,7 @@
 
 -(void) scoreplacement
 {
-    //scorelabel.position = ccp(player.position.x - screenwidth/2 + 15,player.position.y + screenheight/2 - 15);
+    //scorelabel.position = ccp(block.position.x - screenwidth/2 + 15,block.position.y + screenheight/2 - 15);
 }
 
 -(BOOL) getYesOrNo
@@ -238,24 +251,57 @@
     dark.opacity = 0;
     dark.scale = 2;
     id fade = [CCFadeTo actionWithDuration:1.0 opacity:200];
-    [self addChild:dark];
+    [layer addChild:dark];
     [dark runAction:fade];
     
     id tint = [CCTintTo actionWithDuration:1.0f red:255 green:255 blue:255];
+    id tint2 = [CCTintTo actionWithDuration:1.0f red:255 green:255 blue:255];
+    id tint3 = [CCTintTo actionWithDuration:1.0f red:255 green:255 blue:255];
     id fadeplayer = [CCFadeTo actionWithDuration:1.0 opacity:155];
     id fadeblock = [CCFadeTo actionWithDuration:1.0 opacity:155];
     id fadeblock2 = [CCFadeTo actionWithDuration:1.0 opacity:155];
     [player runAction:tint];
+    [block runAction:tint2];
+    [block2 runAction:tint3];
     [player runAction:fadeplayer];
     [block runAction:fadeblock];
     [block2 runAction:fadeblock2];
     
+    
+    [self removeChild:scorelabel];
+    
     CCLabelTTF* gameover = [CCLabelTTF labelWithString:[NSString stringWithFormat:@"%d",score] fontName:@"HelveticaNeue-UltraLight" fontSize:60];
-    [self addChild:gameover];
+    [layer addChild:gameover z:14];
     gameover.opacity = 0;
     id fade2 = [CCFadeIn actionWithDuration:2.0];
     [gameover runAction:fade2];
     gameover.position = ccp(player.position.x,player.position.y + 150);
+    
+    
+    if(!([[NSUserDefaults standardUserDefaults] integerForKey:@"highscore"] > score))
+    {
+        [[NSUserDefaults standardUserDefaults] setInteger:score forKey:@"highscore"];
+    }
+    
+    
+    CCLabelTTF* highscore = [CCLabelTTF labelWithString:[NSString stringWithFormat:@"high score: %d",[[NSUserDefaults standardUserDefaults] integerForKey:@"highscore"]] fontName:@"HelveticaNeue-UltraLight" fontSize:20];
+    [layer addChild:highscore z:14];
+    highscore.opacity = 0;
+    id fade3 = [CCFadeIn actionWithDuration:2.0];
+    [highscore runAction:fade3];
+    highscore.position = ccp(player.position.x - screenwidth/2 + 15,player.position.y + screenheight/2 - 15);
+    highscore.anchorPoint = ccp(0,0.5);
+    
+    
+    
+    CCLabelTTF* retry = [CCLabelTTF labelWithString:@"rotate to retry" fontName:@"HelveticaNeue-UltraLight" fontSize:30];
+    [layer addChild:retry z:14];
+    retry.opacity = 0;
+    id faderet = [CCFadeIn actionWithDuration:2.0];
+    [retry runAction:faderet];
+    retry.position = ccp(player.position.x,player.position.y - 100);
+    
+    
     
     [self performSelector:@selector(karthusult) withObject:nil afterDelay:1.5f];
 }
@@ -310,6 +356,8 @@
         
         if(op == 0)
         {
+            [[NSUserDefaults standardUserDefaults] setFloat:0 forKey:@"rotation"];
+            [[NSUserDefaults standardUserDefaults] setInteger:(arc4random() % 7) forKey:@"color"];
             [[CCDirector sharedDirector] replaceScene:[HelloWorldLayer scene]];
 
         }
@@ -363,6 +411,72 @@
         }
     }
     return blockside;
+}
+
+
+-(void) changeColorStart
+{
+    int randcolor = [[NSUserDefaults standardUserDefaults] integerForKey:@"color"];
+    
+    colorseeking = randcolor;
+    
+    int r;
+    int g;
+    int b;
+    
+    switch(randcolor)
+    {
+        case 0:
+            r = 22;
+            g = 160;
+            b = 133;
+            break;
+        case 1:
+            //rgb(46, 204, 113)
+            r = 46;
+            g = 204;
+            b = 113;
+            break;
+        case 2:
+            //rgb(52, 152, 219)
+            r = 52;
+            g = 152;
+            b = 219;
+            break;
+        case 3:
+            //rgb(142, 68, 173)
+            r = 142;
+            g = 68;
+            b = 173;
+            break;
+        case 4:
+            //rgb(241, 196, 15)
+            r = 241;
+            g = 196;
+            b = 15;
+            break;
+        case 5:
+            //rgb(230, 126, 34)
+            r = 230;
+            g = 126;
+            b = 34;
+            break;
+        case 6:
+            //rgb(231, 76, 60)
+            r = 231;
+            g = 76;
+            b = 60;
+            break;
+    }
+    
+    id tint = [CCTintTo actionWithDuration:0.01f red:r green:g blue:b];
+    id tint2 = [CCTintTo actionWithDuration:0.01f red:r*3/4 green:g*3/4 blue:b*3/4];
+    id tint3 = [CCTintTo actionWithDuration:0.01f red:r*3/4 green:g*3/4 blue:b*3/4];
+    
+    [block runAction:tint2];
+    [block2 runAction:tint3];
+    
+    [player runAction:tint];
 }
 
 -(void) changeColor
@@ -421,6 +535,12 @@
     }
     
     id tint = [CCTintTo actionWithDuration:1.0f red:r green:g blue:b];
+    id tint2 = [CCTintTo actionWithDuration:1.0f red:r*3/4 green:g*3/4 blue:b*3/4];
+    id tint3 = [CCTintTo actionWithDuration:1.0f red:r*3/4 green:g*3/4 blue:b*3/4];
+    
+    [block runAction:tint2];
+    [block2 runAction:tint3];
+    
     [player runAction:tint];
 }
 
@@ -447,35 +567,39 @@
 {
     if(player.position.y > 700)
     {
-        [self removeChild:blockstreak cleanup:YES];
-        [self removeChild:blockstreak2 cleanup:YES];
-        player.position = ccp(player.position.x,-700);
-        [self blur];
+        if(!isdead)
+        {
+            [self dead];
+        }
+        isdead = true;
     }
     
     if(player.position.y < -700)
     {
-        [self removeChild:blockstreak cleanup:YES];
-        [self removeChild:blockstreak2 cleanup:YES];
-        player.position = ccp(player.position.x,700);
-        [self blur];
+        if(!isdead)
+        {
+            [self dead];
+        }
+        isdead = true;
     }
     
     if(player.position.x > 700)
     {
         
-        [self removeChild:blockstreak cleanup:YES];
-        [self removeChild:blockstreak2 cleanup:YES];
-        player.position = ccp(-700,player.position.y);
-        [self blur];
+        if(!isdead)
+        {
+            [self dead];
+        }
+        isdead = true;
     }
     
     if(player.position.x < -700)
     {
-        [self removeChild:blockstreak cleanup:YES];
-        [self removeChild:blockstreak2 cleanup:YES];
-        player.position = ccp(700,player.position.y);
-        [self blur];
+        if(!isdead)
+        {
+            [self dead];
+        }
+        isdead = true;
         
         
         
@@ -490,16 +614,16 @@
     //    //motion streak
     //    blockstreak = [CCMotionStreak streakWithFade:1.5 minSeg:1 width:25 color:ccc3(255,255,255) textureFilename:@"orange.png"];
     //    blockstreak.position = block.position;
-    //    [self addChild:blockstreak];
+    //    [layer addChild:blockstreak];
     //
     //    blockstreak2 = [CCMotionStreak streakWithFade:1.5 minSeg:1 width:25 color:ccc3(255,255,255) textureFilename:@"orange.png"];
     //    blockstreak2.position = block2.position;
-    //    [self addChild:blockstreak2];
+    //    [layer addChild:blockstreak2];
 }
 
 -(void) camerad
 {
-    [self runAction:[CCFollow actionWithTarget:(player) worldBoundary:CGRectMake(-1000,-1000,2000,2000)]];
+    [layer runAction:[CCFollow actionWithTarget:(player) worldBoundary:CGRectMake(-1000,-1000,2000,2000)]];
 }
 
 -(void) positioning
@@ -530,7 +654,7 @@
         
         player.position = ccpAdd(player.position, direction);
         
-        scorelabel.position = ccpAdd(scorelabel.position, direction);
+        //scorelabel.position = ccpAdd(scorelabel.position, direction);
         
         player.rotation = angle + 90;
     }
